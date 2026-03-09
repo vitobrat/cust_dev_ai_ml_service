@@ -3,6 +3,7 @@
 .vscode
 .mypy_cache
 .env
+.claude
 
 poetry.lock
 CLAUDE.md

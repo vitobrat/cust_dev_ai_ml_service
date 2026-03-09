@@ -11,7 +11,7 @@ VERSION = $(shell git rev-parse --short HEAD || echo "latest")
 REGISTRY = victorbratko
 IMAGE_TAG = $(REGISTRY)/$(IMAGE_NAME):$(VERSION)
 
-.PHONY: help install-lint lint tests unit integration run up down logs login build push
+.PHONY: help install-lint lint tests unit integration up down logs
 
 ## help: Показать это сообщение
 help:
@@ -39,35 +39,6 @@ unit:
 integration:
 	$(PYTEST) -vv tests/integration
 
-## run: Развернуть локально FastAPI сервер согласно конфигурационному файлу
+## run: Развернуть локально fast api сервер согласно конфигурационному файлу
 run:
 	PYTHONPATH=$(PYTHONPATH_APP) python src/app.py
-
-## login: Авторизация в Docker Hub
-login:
-	docker login -u victorbratko
-
-## build: Собрать образ приложения для прода
-build:
-	docker build \
-		--target prod \
-		-t $(IMAGE_TAG) \
-		-t $(REGISTRY)/$(IMAGE_NAME):latest \
-		-f ./docker/Dockerfile .
-
-## push: Отправить образ в Docker Hub/Registry
-push:
-	docker push $(IMAGE_TAG)
-	docker push $(REGISTRY)/$(IMAGE_NAME):latest
-
-## up: Запустить dev-окружение (Qdrant + Triton + app)
-up:
-	VERSION=$(VERSION) $(DC_DEV) --env-file $(ENV_FILE) up -d --build
-
-## down: Остановить dev-окружение
-down:
-	$(DC_DEV) --env-file $(ENV_FILE) down
-
-## logs: Посмотреть логи приложения
-logs:
-	$(DC_DEV) --env-file $(ENV_FILE) logs -f app

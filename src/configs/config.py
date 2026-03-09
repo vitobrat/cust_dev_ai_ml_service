@@ -47,6 +47,58 @@ class LoggerConfigs(_BaseValidatedConfig):
     logging_config_file: Path = Path(PROJECT_ROOT, "config", "logging.yaml")
 
 
+class QdrantConfigs(_BaseValidatedConfig):
+    """Qdrant vector database connection and collection settings.
+
+    Attributes:
+        host: Qdrant server hostname.
+        port: REST API port.
+        grpc_port: gRPC port (preferred for performance).
+        collection_name: Default collection used for document embeddings.
+        vector_size: Dimensionality of stored embedding vectors.
+    """
+
+    host: str
+    port: int
+    grpc_port: int
+    collection_name: str
+    vector_size: int
+
+
+class TritonConfigs(_BaseValidatedConfig):
+    """Triton Inference Server connection settings.
+
+    Attributes:
+        host: Triton server hostname.
+        grpc_port: gRPC port for model inference requests.
+        http_port: HTTP port for health checks and metadata.
+        model_name: Name of the deployed embedding model.
+    """
+
+    host: str
+    grpc_port: int
+    http_port: int
+    model_name: str
+
+
+class RabbitMQConfigs(_BaseValidatedConfig):
+    """RabbitMQ broker connection settings including credentials.
+
+    Attributes:
+        host: RabbitMQ server hostname.
+        port: AMQP port.
+        vhost: Virtual host path.
+        user: Broker username (loaded from environment).
+        password: Broker password (loaded from environment).
+    """
+
+    host: str
+    port: int
+    vhost: str
+    user: str
+    password: str
+
+
 class AppConfigs(_BaseValidatedConfig):
     """Root application configuration aggregating all subsystem configs.
 
@@ -59,6 +111,9 @@ class AppConfigs(_BaseValidatedConfig):
         log_level: Logging verbosity level.
         workers_number: Number of uvicorn worker processes.
         logger: Logging subsystem configuration.
+        qdrant: Qdrant vector database configuration.
+        triton: Triton Inference Server configuration.
+        rabbitmq: RabbitMQ broker configuration.
     """
 
     app_host: str
@@ -66,6 +121,9 @@ class AppConfigs(_BaseValidatedConfig):
     log_level: LogLevels
     workers_number: int
     logger: LoggerConfigs = Field(default_factory=LoggerConfigs)
+    qdrant: QdrantConfigs
+    triton: TritonConfigs
+    rabbitmq: RabbitMQConfigs
 
     @classmethod
     def init(cls) -> "AppConfigs":

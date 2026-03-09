@@ -15,3 +15,10 @@ triton:
   grpc_port: 8001
   http_port: 8000
   model_name: "embedding_model"
+
+rabbitmq:
+  host: "localhost"
+  port: 5672
+  vhost: "/"
+  user: "${oc.env:RABBITMQ_USER,guest}"
+  password: "${oc.env:RABBITMQ_PASSWORD,guest}"
