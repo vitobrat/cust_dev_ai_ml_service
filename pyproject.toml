@@ -1,0 +1,23 @@
+[project]
+name = "ml-service"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "vito_brat",email = "bratko.viktor2004@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "pydantic (>=2.12.5,<3.0.0)",
+    "omegaconf (>=2.3.0,<3.0.0)",
+    "pydantic-settings (>=2.13.1,<3.0.0)",
+    "uvicorn (>=0.41.0,<0.42.0)",
+    "fastapi (>=0.135.1,<0.136.0)",
+    "slowapi (>=0.1.9,<0.2.0)",
+    "pre-commit (>=4.5.1,<5.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

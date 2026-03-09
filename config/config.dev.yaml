@@ -1,0 +1,17 @@
+app_host: "0.0.0.0"
+app_port: 8001
+log_level: "DEBUG"
+workers_number: 1
+
+qdrant:
+  host: "localhost"
+  port: 6333
+  grpc_port: 6334
+  collection_name: "documents"
+  vector_size: 768
+
+triton:
+  host: "localhost"
+  grpc_port: 8001
+  http_port: 8000
+  model_name: "embedding_model"

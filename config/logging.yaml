@@ -1,0 +1,62 @@
+version: 1
+
+formatters:
+  json_formatter:
+    '()': src.configs.log.formatters.LogsJsonFormatter
+    format: '%(levelname)s %(asctime)s %(module)s %(lineno)d %(message)s '
+    datefmt: '%Y-%m-%d %H:%M:%S'
+    json_ensure_ascii: False
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: json_formatter
+    stream: ext://sys.stdout
+  none:
+    class: logging.NullHandler
+
+loggers:
+  amqp:
+    handlers: [ none ]
+    propagate: False
+  conf:
+    handlers: [ none ]
+    propagate: False
+  urllib3.util.retry:
+    handlers: [ none ]
+    propagate: False
+  multipart.default:
+    handlers: [ none ]
+    propagate: False
+    level: WARNING
+  uvicorn.default:
+    handlers: [ console ]
+    level: INFO
+    propagate: False
+  uvicorn.access:
+    handlers: [ console ]
+    level: INFO
+    propagate: False
+  uvicorn.error:
+    handlers: [ console ]
+    level: INFO
+    propagate: False
+  httpx:
+    handlers: [ none ]
+    propagate: false
+    level: ERROR
+  httpcore:
+    handlers: [ none ]
+    propagate: false
+    level: ERROR
+  urllib3:
+    handlers: [ none ]
+    propagate: false
+    level: ERROR
+  '': # root logger
+    handlers: [ console, ]
+    level: DEBUG
+    propagate: False
+
+disable_existing_loggers: True
