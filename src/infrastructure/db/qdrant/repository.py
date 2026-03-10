@@ -19,7 +19,7 @@ from qdrant_client.models import (  # noqa: WPS235
     VectorParams,
 )
 
-_USER_ID_PAYLOAD_KEY: str = "user_id"
+from src.configs.consts import _USER_ID_PAYLOAD_KEY
 
 
 class BaseQdrantRepository(ABC):

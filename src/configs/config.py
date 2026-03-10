@@ -73,12 +73,16 @@ class TritonConfigs(_BaseValidatedConfig):
         grpc_port: gRPC port for model inference requests.
         http_port: HTTP port for health checks and metadata.
         model_name: Name of the deployed embedding model.
+        input_name: Name of the model's input tensor (BYTES datatype).
+        output_name: Name of the model's output embedding tensor (FP32 datatype).
     """
 
     host: str
     grpc_port: int
     http_port: int
     model_name: str
+    input_name: str
+    output_name: str
 
 
 class RabbitMQConfigs(_BaseValidatedConfig):
