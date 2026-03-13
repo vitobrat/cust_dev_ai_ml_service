@@ -21,6 +21,6 @@ triton:
 rabbitmq:
   host: "localhost"
   port: 5672
-  vhost: "/"
+  vhost: "ml"
   user: "${oc.env:RABBITMQ_USER,guest}"
   password: "${oc.env:RABBITMQ_PASSWORD,guest}"

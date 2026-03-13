@@ -17,7 +17,8 @@ dependencies = [
     "pre-commit (>=4.5.1,<5.0.0)",
     "qdrant-client (>=1.14.2,<2.0.0)",
     "tritonclient[grpc] (>=2.66.0,<3.0.0)",
-    "numpy (>=2.4.3,<3.0.0)"
+    "numpy (>=2.4.3,<3.0.0)",
+    "aio-pika (>=9.6.1,<10.0.0)"
 ]
 
 
