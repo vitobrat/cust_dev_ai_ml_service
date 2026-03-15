@@ -9,6 +9,8 @@ qdrant:
   grpc_port: 6334
   collection_name: "documents"
   vector_size: 768
+  hnsw_edge_size: 16
+  hnsw_neighbour_size: 100
 
 triton:
   host: "localhost"
@@ -22,5 +24,3 @@ rabbitmq:
   host: "localhost"
   port: 5672
   vhost: "ml"
-  user: "${oc.env:RABBITMQ_USER,guest}"
-  password: "${oc.env:RABBITMQ_PASSWORD,guest}"

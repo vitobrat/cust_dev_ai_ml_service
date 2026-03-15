@@ -56,6 +56,8 @@ class QdrantConfigs(_BaseValidatedConfig):
         grpc_port: gRPC port (preferred for performance).
         collection_name: Default collection used for document embeddings.
         vector_size: Dimensionality of stored embedding vectors.
+        hnsw_edge_size: Number of bi-directional links per HNSW graph node (m parameter).
+        hnsw_neighbour_size: Candidate pool size during HNSW index construction (ef_construct).
     """
 
     host: str
@@ -63,6 +65,8 @@ class QdrantConfigs(_BaseValidatedConfig):
     grpc_port: int
     collection_name: str
     vector_size: int
+    hnsw_edge_size: int
+    hnsw_neighbour_size: int
 
 
 class TritonConfigs(_BaseValidatedConfig):
@@ -99,8 +103,8 @@ class RabbitMQConfigs(_BaseValidatedConfig):
     host: str
     port: int
     vhost: str
-    user: str
-    password: str
+    user: str = Field(alias="RABBITMQ_USER")
+    password: str = Field(alias="RABBITMQ_PASSWORD")
 
 
 class AppConfigs(_BaseValidatedConfig):

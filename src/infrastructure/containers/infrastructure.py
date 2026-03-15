@@ -17,6 +17,7 @@ class InfrastructureContainer(containers.DeclarativeContainer):
 
     Attributes:
         config: Application configuration provider.
+        qdrant_configs: Singleton QdrantConfigs (exposed for domain containers).
         qdrant_client: Singleton AsyncQdrantClient for vector operations.
         triton_client: Singleton TritonClient for embedding inference.
         rabbitmq_client: Singleton RabbitMQClient for message brokering.
@@ -24,16 +25,20 @@ class InfrastructureContainer(containers.DeclarativeContainer):
 
     config = providers.Configuration()
 
+    qdrant_configs = providers.Singleton(
+        QdrantConfigs,
+        host=config.qdrant.host,
+        port=config.qdrant.port,
+        grpc_port=config.qdrant.grpc_port,
+        collection_name=config.qdrant.collection_name,
+        vector_size=config.qdrant.vector_size,
+        hnsw_edge_size=config.qdrant.hnsw_edge_size,
+        hnsw_neighbour_size=config.qdrant.hnsw_neighbour_size,
+    )
+
     qdrant_client = providers.Singleton(
         create_qdrant_client,
-        configs=providers.Singleton(
-            QdrantConfigs,
-            host=config.qdrant.host,
-            port=config.qdrant.port,
-            grpc_port=config.qdrant.grpc_port,
-            collection_name=config.qdrant.collection_name,
-            vector_size=config.qdrant.vector_size,
-        ),
+        configs=qdrant_configs,
     )
 
     triton_client = providers.Singleton(
