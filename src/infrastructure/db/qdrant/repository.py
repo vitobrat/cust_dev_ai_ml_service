@@ -163,10 +163,11 @@ class BaseQdrantRepository(ABC):
         if extra_filter and extra_filter.must:
             must_conditions.extend(extra_filter.must)
 
-        return await self._client.search(
+        points_result = await self._client.query_points(
             collection_name=self._collection_name,
-            query_vector=query_vector,
+            query=query_vector,
             query_filter=Filter(must=must_conditions),
             limit=limit,
             with_payload=True,
         )
+        return points_result.points
