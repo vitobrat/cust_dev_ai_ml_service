@@ -28,6 +28,8 @@ class SearchContainer(containers.DeclarativeContainer):
         client=infrastructure.qdrant_client,
         collection_name=infrastructure.qdrant_configs.provided.collection_name,
         vector_size=infrastructure.qdrant_configs.provided.vector_size,
+        hnsw_edge_size=infrastructure.qdrant_configs.provided.hnsw_edge_size,
+        hnsw_neighbour_size=infrastructure.qdrant_configs.provided.hnsw_neighbour_size,
     )
 
     service = providers.Factory(

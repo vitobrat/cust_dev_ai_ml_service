@@ -1,0 +1,146 @@
+services:
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:4.0-management
+    hostname: rabbitmq
+    restart: unless-stopped
+
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_VHOST: ml
+
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+    networks:
+      - backend_network
+
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics check_port_connectivity"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+
+  qdrant:
+    container_name: qdrant
+    image: qdrant/qdrant:v1.17.0
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+    ports:
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
+
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+    networks:
+      - backend_network
+
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+
+  triton:
+    container_name: triton
+    image: nvcr.io/nvidia/tritonserver:24.12-py3
+    restart: unless-stopped
+
+    command:
+      - tritonserver
+      - --model-repository=/models
+      - --disable-auto-complete-config
+      - --log-verbose=1
+
+    shm_size: 512m
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/v2/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+    ports:
+      - 127.0.0.1:8000:8000
+      - 127.0.0.1:8001:8001
+      - 127.0.0.1:8002:8002
+
+    volumes:
+      - ../models:/models:ro
+
+    networks:
+      - backend_network
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+
+  app:
+    container_name: app
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+      target: prod
+    restart: always
+
+    depends_on:
+      triton:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
+    ports:
+      - "8888:8888"
+
+    networks:
+      - backend_network
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.8'
+          memory: 1024M
+        reservations:
+          cpus: '0.2'
+          memory: 512M
+
+volumes:
+  rabbitmq_data:
+    driver: local
+  qdrant_data:
+    driver: local
+
+networks:
+  backend_network:
+    driver: bridge

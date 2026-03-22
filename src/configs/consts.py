@@ -19,3 +19,6 @@ class LogLevels(Enum):
     WARNING: str = "WARNING"
     ERROR: str = "ERROR"
     CRITICAL: str = "CRITICAL"
+
+
+EPSILON = 1e-9

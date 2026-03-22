@@ -64,7 +64,7 @@ class QdrantConfigs(_BaseValidatedConfig):
     port: int
     grpc_port: int
     collection_name: str
-    vector_size: int
+    vector_size: int = 384
     hnsw_edge_size: int
     hnsw_neighbour_size: int
 
@@ -84,9 +84,10 @@ class TritonConfigs(_BaseValidatedConfig):
     host: str
     grpc_port: int
     http_port: int
-    model_name: str
-    input_name: str
-    output_name: str
+    model_name: str = "embedding_model_multilingual_e5_small"
+    output_name: str = "last_hidden_state"
+    max_length: int = 512
+    tokenizer_name: str = "intfloat/multilingual-e5-small"
 
 
 class RabbitMQConfigs(_BaseValidatedConfig):

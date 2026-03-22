@@ -2,7 +2,12 @@
 
 from dependency_injector import containers, providers
 
-from src.configs.config import QdrantConfigs, RabbitMQConfigs, TritonConfigs
+from src.configs.config import (
+    AppConfigs,
+    QdrantConfigs,
+    RabbitMQConfigs,
+    TritonConfigs,
+)
 from src.infrastructure.db.qdrant.client import create_qdrant_client
 from src.infrastructure.rabbitmq.client import RabbitMQClient
 from src.infrastructure.triton.client import TritonClient
@@ -23,7 +28,7 @@ class InfrastructureContainer(containers.DeclarativeContainer):
         rabbitmq_client: Singleton RabbitMQClient for message brokering.
     """
 
-    config = providers.Configuration()
+    config: AppConfigs = providers.Configuration()
 
     qdrant_configs = providers.Singleton(
         QdrantConfigs,

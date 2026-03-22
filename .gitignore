@@ -8,6 +8,7 @@
 poetry.lock
 CLAUDE.md
 MY_README.md
+models
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

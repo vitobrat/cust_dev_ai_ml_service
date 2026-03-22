@@ -2,6 +2,7 @@
 
 from dependency_injector import containers, providers
 
+from src.configs.config import AppConfigs
 from src.domains.embeddings.containers import EmbeddingsContainer
 from src.domains.search.containers import SearchContainer
 from src.infrastructure.containers.infrastructure import InfrastructureContainer
@@ -21,7 +22,7 @@ class DomainContainer(containers.DeclarativeContainer):
         search: Search domain services and repositories.
     """
 
-    config = providers.Configuration()
+    config: AppConfigs = providers.Configuration()
 
     infrastructure: InfrastructureContainer = providers.Container(
         InfrastructureContainer,
