@@ -1,9 +1,8 @@
 """Async RabbitMQ client for publishing and consuming JSON messages."""
 
 import json
-from collections.abc import Awaitable, Callable
 from logging import Logger
-from typing import Any
+from typing import Any, Protocol
 from urllib.parse import quote
 
 import aio_pika
@@ -11,7 +10,26 @@ import aio_pika
 from src.configs.config import RabbitMQConfigs
 from src.configs.log.logger import get_logger
 
-MessageHandler = Callable[[dict[str, Any]], Awaitable[None]]
+
+class MessageHandler(Protocol):
+    """Protocol for RabbitMQ message handler callables.
+
+    Any callable matching this signature can be used as a consumer handler.
+    """
+
+    async def __call__(
+        self,
+        reply_to: str | None,
+        correlation_id: str | None,
+        payload: dict[str, Any],
+    ) -> None:
+        """Handle a single incoming RabbitMQ message.
+
+        Args:
+            reply_to: Queue name to publish the reply to, if provided.
+            correlation_id: Opaque request ID to echo back in the reply.
+            payload: Deserialised message body.
+        """
 
 
 class RabbitMQClient:
@@ -83,10 +101,40 @@ class RabbitMQClient:
             payload: Arbitrary JSON-serialisable dictionary to send.
         """
         self._logger.debug("Publishing message to queue '%s': %s", queue_name, payload)
+
         await self._channel.declare_queue(queue_name, durable=True)
         message = aio_pika.Message(body=json.dumps(payload).encode(), content_type="application/json")
         await self._channel.default_exchange.publish(message, routing_key=queue_name)
+
         self._logger.debug("Message published to queue '%s'", queue_name)
+
+    async def publish_reply(
+        self,
+        reply_to: str,
+        correlation_id: str,
+        payload: dict[str, Any],
+    ) -> None:
+        """Publish a JSON reply to a client-owned reply queue.
+
+        Unlike publish(), skips queue declaration because the reply queue
+        is created by the caller and may be transient. Attaches correlation_id
+        so the caller can match this response to the original request.
+
+        Args:
+            reply_to: Target reply queue name (provided by the original message).
+            correlation_id: Opaque ID from the original request to echo back.
+            payload: Arbitrary JSON-serialisable dictionary to send as the reply.
+        """
+        self._logger.debug("Publishing reply to queue '%s': %s", reply_to, payload)
+
+        message = aio_pika.Message(
+            body=json.dumps(payload).encode(),
+            content_type="application/json",
+            correlation_id=correlation_id,
+        )
+        await self._channel.default_exchange.publish(message, routing_key=reply_to)
+
+        self._logger.debug("Reply published to queue '%s'", reply_to)
 
     async def consume(self, queue_name: str, consume_handler: MessageHandler) -> None:
         """Start consuming messages from a queue with a coroutine handler.
@@ -97,15 +145,15 @@ class RabbitMQClient:
 
         Args:
             queue_name: Queue to consume from (declared as durable).
-            consume_handler: Async coroutine that receives the deserialised payload dict.
+            consume_handler: Async coroutine receiving reply_to, correlation_id, and payload.
         """
-        self._logger.debug("Registering consumer for queue '%s'", queue_name)
+        self._logger.info("Registering consumer for queue '%s'", queue_name)
         queue = await self._channel.declare_queue(queue_name, durable=True)
 
         await queue.consume(
             lambda msg: self._consume_handle(msg, consume_handler, queue_name),
         )
-        self._logger.debug("Consumer registered for queue '%s'", queue_name)
+        self._logger.info("Consumer registered for queue '%s'", queue_name)
 
     @property
     def _url(self) -> str:
@@ -133,10 +181,17 @@ class RabbitMQClient:
 
         Args:
             message: Incoming AMQP message to process.
-            consume_handler: Async coroutine that receives the deserialised payload dict.
+            consume_handler: Async coroutine receiving reply_to, correlation_id, and payload.
             queue_name: Name of the source queue (used for logging).
         """
         async with message.process():
+            reply_to = message.reply_to
+            correlation_id = message.correlation_id
             payload = json.loads(message.body)
             self._logger.debug("Received message from queue '%s': %s", queue_name, payload)
-            await consume_handler(payload)
+
+            await consume_handler(
+                reply_to,
+                correlation_id,
+                payload,
+            )

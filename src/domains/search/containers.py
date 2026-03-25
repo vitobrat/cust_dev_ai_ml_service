@@ -3,6 +3,7 @@
 from dependency_injector import containers, providers
 
 from src.domains.search.app.usecases.service import SearchService
+from src.domains.search.app.workers.handler import SearchWorkerHandler
 from src.infrastructure.containers.infrastructure import InfrastructureContainer
 from src.infrastructure.db.qdrant.embedding_repository import (
     EmbeddingRepository,
@@ -36,4 +37,10 @@ class SearchContainer(containers.DeclarativeContainer):
         SearchService,
         repository=repository,
         triton_client=infrastructure.triton_client,
+    )
+
+    search_handler: SearchWorkerHandler = providers.Singleton(
+        SearchWorkerHandler,
+        service=service,
+        rabbitmq=infrastructure.rabbitmq_client,
     )

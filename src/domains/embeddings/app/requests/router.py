@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Response, status
 
 from src.configs.log.logger import get_logger
 from src.domains.embeddings.app.requests.schema import (
-    DeleteResponse,
+    PostDeleteResponse,
     PostUpsertRequest,
     PostUpsertResponse,
 )
@@ -57,7 +57,7 @@ async def upsert_embeddings(
 
 @router.delete(
     "/{user_id}/{point_id}",
-    response_model=DeleteResponse | ResponseBase,
+    response_model=PostDeleteResponse | ResponseBase,
     status_code=status.HTTP_200_OK,
 )
 @inject
@@ -66,7 +66,7 @@ async def delete_embedding_by_id(
     user_id: uuid.UUID,
     point_id: uuid.UUID,
     service: EmbeddingsService = Depends(Provide[DomainContainer.embeddings.service]),
-) -> DeleteResponse | ResponseBase:
+) -> PostDeleteResponse | ResponseBase:
     """Delete a single embedding point owned by the given user.
 
     Args:
@@ -89,16 +89,16 @@ async def delete_embedding_by_id(
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return ResponseBase(details=f"Unexpected error during embedding deletion: {exc}", status=StatusType.ERROR)
 
-    return DeleteResponse(msg=True, status=StatusType.SUCCESS)
+    return PostDeleteResponse(msg=True, status=StatusType.SUCCESS)
 
 
-@router.delete("/{user_id}", response_model=DeleteResponse | ResponseBase, status_code=status.HTTP_200_OK)
+@router.delete("/{user_id}", response_model=PostDeleteResponse | ResponseBase, status_code=status.HTTP_200_OK)
 @inject
 async def delete_all_user_embeddings(
     response: Response,
     user_id: uuid.UUID,
     service: EmbeddingsService = Depends(Provide[DomainContainer.embeddings.service]),
-) -> DeleteResponse | ResponseBase:
+) -> PostDeleteResponse | ResponseBase:
     """Delete all embeddings belonging to a user.
 
     Args:
@@ -120,4 +120,4 @@ async def delete_all_user_embeddings(
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return ResponseBase(details=f"Unexpected error during embedding deletion: {exc}", status=StatusType.ERROR)
 
-    return DeleteResponse(msg=True, status=StatusType.SUCCESS)
+    return PostDeleteResponse(msg=True, status=StatusType.SUCCESS)

@@ -1,39 +1,29 @@
 """Request and response schemas for the embeddings domain."""
 
-import uuid
-
-from pydantic import BaseModel, Field
-
-from src.schemas.api_base import ResponseBase
-
-
-class PostUpsertRequest(BaseModel):
-    """Request body for the embedding upsert endpoint.
-
-    Attributes:
-        user_id: Owner of the documents being indexed.
-        texts: Non-empty list of raw text documents to embed and store.
-    """
-
-    user_id: uuid.UUID
-    texts: list[str] = Field(min_length=1)
+from src.schemas.embeddings import (
+    DeleteAllRequest,
+    DeleteByIdRequest,
+    DeleteResponse,
+    UpsertRequest,
+    UpsertResponse,
+)
 
 
-class PostUpsertResponse(ResponseBase):
-    """Response body for a successful embedding upsert.
-
-    Attributes:
-        msg: Number of documents successfully stored in Qdrant.
-    """
-
-    msg: int
+class PostUpsertRequest(UpsertRequest):
+    """Request body for the HTTP embedding upsert endpoint."""
 
 
-class DeleteResponse(ResponseBase):
-    """Response body for a successful embedding deletion.
+class PostUpsertResponse(UpsertResponse):
+    """Response body for the HTTP embedding upsert endpoint."""
 
-    Attributes:
-        msg: True if deletion completed without errors.
-    """
 
-    msg: bool
+class PostDeleteByIdRequest(DeleteByIdRequest):
+    """Request body for the HTTP single point deletion endpoint."""
+
+
+class PostDeleteAllRequest(DeleteAllRequest):
+    """Request body for the HTTP delete-all endpoint."""
+
+
+class PostDeleteResponse(DeleteResponse):
+    """Response body for the HTTP embedding deletion endpoint."""

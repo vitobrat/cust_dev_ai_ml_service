@@ -23,7 +23,7 @@ setup_logger(settings.logger.logging_config_file)
 logger = get_logger(__name__)
 
 
-def init_containers() -> DomainContainer:
+def init_domain_containers() -> DomainContainer:
     """Initialize DI containers for app"""
     container = DomainContainer()
     container.config.from_dict(settings.model_dump())
@@ -46,22 +46,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Yields:
         Control back to the framework while the application is running.
     """
-    container = init_containers()
+    container = init_domain_containers()
 
-    rabbitmq_client = container.infrastructure.rabbitmq_client()
     triton_client = container.infrastructure.triton_client()
     embedding_repo = container.embeddings.repository()
 
-    await rabbitmq_client.connect()
     await embedding_repo.ensure_collection()
 
     logger.info("ML service started successfully")
 
-    try:  # noqa: WPS243
+    try:
         yield
     finally:
         await triton_client.close()
-        await rabbitmq_client.close()
         logger.info("ML service shut down successfully")
 
 

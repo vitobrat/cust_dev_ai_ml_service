@@ -3,6 +3,7 @@
 from dependency_injector import containers, providers
 
 from src.domains.embeddings.app.usecases.service import EmbeddingsService
+from src.domains.embeddings.app.workers.handler import EmbeddingsWorkerHandler
 from src.infrastructure.containers.infrastructure import InfrastructureContainer
 from src.infrastructure.db.qdrant.embedding_repository import (
     EmbeddingRepository,
@@ -36,4 +37,10 @@ class EmbeddingsContainer(containers.DeclarativeContainer):
         EmbeddingsService,
         repository=repository,
         triton_client=infrastructure.triton_client,
+    )
+
+    embeddings_handler: EmbeddingsWorkerHandler = providers.Singleton(
+        EmbeddingsWorkerHandler,
+        service=service,
+        rabbitmq=infrastructure.rabbitmq_client,
     )

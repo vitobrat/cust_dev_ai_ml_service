@@ -1,14 +1,9 @@
 """Request and response schemas for the search domain."""
 
-import uuid
-
-from pydantic import BaseModel, Field
-
-from src.schemas.api_base import ResponseBase
-from src.schemas.search import SearchResultItem
+from src.schemas.search import SearchRequest, SearchResponse, SearchResultItem
 
 
-class PostSearchRequest(BaseModel):
+class PostSearchRequest(SearchRequest):
     """Request body for the semantic search endpoint.
 
     Attributes:
@@ -17,12 +12,8 @@ class PostSearchRequest(BaseModel):
         top_k: Maximum number of results to return.
     """
 
-    user_id: uuid.UUID
-    query: str
-    top_k: int = Field(default=10, ge=1, le=100)
 
-
-class PostSearchResponse(ResponseBase):
+class PostSearchResponse(SearchResponse):
     """Response body for the semantic search endpoint.
 
     Attributes:

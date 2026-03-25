@@ -22,3 +22,6 @@ class LogLevels(Enum):
 
 
 EPSILON = 1e-9
+
+EMBEDDINGS_RABBITMQ_QUEUE = "embeddings.request"
+SEARCH_RABBITMQ_QUEUE = "search.request"
