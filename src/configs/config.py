@@ -77,8 +77,9 @@ class TritonConfigs(_BaseValidatedConfig):
         grpc_port: gRPC port for model inference requests.
         http_port: HTTP port for health checks and metadata.
         model_name: Name of the deployed embedding model.
-        input_name: Name of the model's input tensor (BYTES datatype).
-        output_name: Name of the model's output embedding tensor (FP32 datatype).
+        output_name: Name of the model output tensor requested from Triton.
+        max_length: Maximum token sequence length used by the local tokenizer.
+        tokenizer_name: HuggingFace tokenizer that matches the deployed model.
     """
 
     host: str

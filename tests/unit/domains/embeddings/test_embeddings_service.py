@@ -35,10 +35,11 @@ async def test_upsert_calls_triton_with_all_texts(
     user_id: uuid.UUID,
     sample_texts: list[str],
 ) -> None:
-    """Triton must be called exactly once with the complete list of input texts."""
+    """Triton must receive E5 passage-prefixed texts for document embeddings."""
     await embeddings_service.upsert(user_id, sample_texts)
 
-    mock_triton.embed.assert_awaited_once_with(sample_texts)
+    prefixed_texts = [f"passage: {text}" for text in sample_texts]
+    mock_triton.embed.assert_awaited_once_with(prefixed_texts)
 
 
 async def test_upsert_calls_repository_with_correct_user_id(
@@ -91,6 +92,23 @@ async def test_upsert_stores_original_text_in_point_payload(
     points: list[PointStruct] = mock_repository.upsert.call_args.args[1]
     stored_texts = [point.payload["text"] for point in points]
     assert stored_texts == sample_texts
+
+
+async def test_upsert_logs_operation_latency(
+    embeddings_service: EmbeddingsService,
+    mock_triton: MagicMock,
+    user_id: uuid.UUID,
+    sample_texts: list[str],
+    fake_vector: list[float],
+) -> None:
+    """Successful upserts must log a latency line for operational visibility."""
+    mock_triton.embed = AsyncMock(return_value=[fake_vector for _ in sample_texts])
+    logger = MagicMock()
+    embeddings_service._logger = logger
+
+    await embeddings_service.upsert(user_id, sample_texts)
+
+    assert "Embedding upsert completed" in logger.info.call_args.args[0]
 
 
 async def test_upsert_triton_failure_raises_embedding_error(

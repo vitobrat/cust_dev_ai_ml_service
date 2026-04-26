@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from src.configs.log.logger import get_logger
 from src.domains.search.app.usecases.service import SearchService
 from src.domains.search.exceptions import SearchQueryError
+from src.infrastructure.exceptions import EmbeddingError
 from src.infrastructure.rabbitmq.client import RabbitMQClient
 from src.schemas.api_base import ResponseBase, StatusType
 from src.schemas.search import SearchRequest, SearchResponse
@@ -60,7 +61,7 @@ class SearchWorkerHandler:
             await self._rabbitmq.publish_reply(
                 reply_to,
                 correlation_id,
-                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(),
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
             )
             return
 
@@ -75,12 +76,20 @@ class SearchWorkerHandler:
             await self._rabbitmq.publish_reply(
                 reply_to,
                 correlation_id,
-                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(),
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
+            )
+            return
+        except EmbeddingError as exc:
+            self._logger.error("Search embedding failed for user %s: %s", search_request.user_id, exc)
+            await self._rabbitmq.publish_reply(
+                reply_to,
+                correlation_id,
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
             )
             return
 
         await self._rabbitmq.publish_reply(
             reply_to,
             correlation_id,
-            payload=SearchResponse(msg=search_results, status=StatusType.SUCCESS).model_dump(),
+            payload=SearchResponse(msg=search_results, status=StatusType.SUCCESS).model_dump(mode="json"),
         )

@@ -4,9 +4,13 @@
 .mypy_cache
 .env
 .claude
+.codex
 
 poetry.lock
 CLAUDE.md
+AGENTS.md
+ARCHITECTURE.md
+PROJECT_CONTEXT.md
 MY_README.md
 model.onnx
 

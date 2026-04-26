@@ -58,12 +58,12 @@ async def test_search_calls_triton_with_query_wrapped_in_list(
     mock_triton: MagicMock,
     user_id: uuid.UUID,
 ) -> None:
-    """Triton must receive the query as a single-element list, not a bare string."""
+    """Triton must receive the E5 query-prefixed text as a single-element list."""
     query = "find relevant documents"
 
     await search_service.search(user_id, query=query, top_k=10)
 
-    mock_triton.embed.assert_awaited_once_with([query])
+    mock_triton.embed.assert_awaited_once_with([f"query: {query}"])
 
 
 async def test_search_passes_first_embedding_to_repository(
@@ -92,6 +92,19 @@ async def test_search_passes_top_k_as_limit_to_repository(
 
     limit: int = mock_repository.search.call_args.kwargs["limit"]
     assert limit == 7  # noqa: WPS432
+
+
+async def test_search_logs_operation_latency(
+    search_service: SearchService,
+    user_id: uuid.UUID,
+) -> None:
+    """Successful searches must log a latency line for operational visibility."""
+    logger = MagicMock()
+    search_service._logger = logger
+
+    await search_service.search(user_id, query="query", top_k=5)
+
+    assert "Semantic search completed" in logger.info.call_args.args[0]
 
 
 async def test_search_triton_failure_raises_embedding_error(

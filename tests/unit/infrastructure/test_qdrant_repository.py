@@ -50,6 +50,23 @@ async def test_ensure_collection_skips_creation_when_already_present(
     mock_qdrant_client.create_collection.assert_not_awaited()
 
 
+async def test_ensure_collection_creates_user_id_index_when_collection_exists_without_it(
+    repository: EmbeddingRepository,
+    mock_qdrant_client: MagicMock,
+) -> None:
+    """ensure_collection must repair a missing user_id index on an existing collection."""
+    collection_info = MagicMock()
+    collection_info.payload_schema = {}
+    mock_qdrant_client.collection_exists = AsyncMock(return_value=True)
+    mock_qdrant_client.get_collection = AsyncMock(return_value=collection_info)
+
+    await repository.ensure_collection()
+
+    mock_qdrant_client.create_collection.assert_not_awaited()
+    field_name: str = mock_qdrant_client.create_payload_index.call_args.kwargs["field_name"]
+    assert field_name == _USER_ID_PAYLOAD_KEY
+
+
 async def test_ensure_collection_creates_keyword_index_on_user_id_field(
     repository: EmbeddingRepository,
     mock_qdrant_client: MagicMock,

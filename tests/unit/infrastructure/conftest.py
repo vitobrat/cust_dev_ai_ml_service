@@ -38,6 +38,9 @@ def mock_qdrant_client() -> MagicMock:
     mock.collection_exists = AsyncMock(return_value=False)
     mock.create_collection = AsyncMock()
     mock.create_payload_index = AsyncMock()
+    collection_info = MagicMock()
+    collection_info.payload_schema = {}
+    mock.get_collection = AsyncMock(return_value=collection_info)
     mock.upsert = AsyncMock()
     mock.delete = AsyncMock()
     mock_result = MagicMock()

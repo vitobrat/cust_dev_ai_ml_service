@@ -1,9 +1,11 @@
 """Embeddings application service."""
 
+import time
 import uuid
 
 from qdrant_client.models import PointStruct
 
+from src.configs.log.logger import get_logger
 from src.domains.embeddings.exceptions import (
     EmbeddingDeleteError,
     EmbeddingUpsertError,
@@ -13,6 +15,8 @@ from src.infrastructure.db.qdrant.embedding_repository import (
 )
 from src.infrastructure.exceptions import EmbeddingError
 from src.infrastructure.triton.client import TritonClient
+
+_PASSAGE_PREFIX = "passage: "
 
 
 class EmbeddingsService:
@@ -32,6 +36,7 @@ class EmbeddingsService:
         """
         self._repository = repository
         self._triton_client = triton_client
+        self._logger = get_logger(f"{__name__}.{self.__class__.__name__}")
 
     async def upsert(self, user_id: uuid.UUID, texts: list[str]) -> int:
         """Embed texts via Triton and upsert them into Qdrant for the given user.
@@ -47,8 +52,11 @@ class EmbeddingsService:
             EmbeddingError: If Triton inference fails.
             EmbeddingUpsertError: If Qdrant upsert fails.
         """
+        started_at = time.perf_counter()
+        texts_for_embedding = [self._as_passage(text) for text in texts]
+
         try:
-            embeddings = await self._triton_client.embed(texts)
+            embeddings = await self._triton_client.embed(texts_for_embedding)
         except Exception as embedding_exception:
             raise EmbeddingError(str(embedding_exception)) from embedding_exception
 
@@ -61,6 +69,9 @@ class EmbeddingsService:
             await self._repository.upsert(user_id, points)
         except Exception as upsert_exception:
             raise EmbeddingUpsertError(str(upsert_exception)) from upsert_exception
+
+        elapsed = time.perf_counter() - started_at
+        self._logger.info("Embedding upsert completed in %.4fs for %s texts", elapsed, len(points))
 
         return len(points)
 
@@ -92,3 +103,10 @@ class EmbeddingsService:
             await self._repository.delete_all_for_user(user_id)
         except Exception as delete_exception:
             raise EmbeddingDeleteError(str(delete_exception)) from delete_exception
+
+    @staticmethod
+    def _as_passage(text: str) -> str:
+        """Apply the E5 passage prefix expected for indexed documents."""
+        if text.startswith(_PASSAGE_PREFIX):
+            return text
+        return f"{_PASSAGE_PREFIX}{text}"

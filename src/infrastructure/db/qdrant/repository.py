@@ -61,6 +61,7 @@ class BaseQdrantRepository(ABC):
         The KEYWORD index on user_id enables O(log N) tenant-scoped filtering.
         """
         if await self._client.collection_exists(self._collection_name):
+            await self._ensure_user_id_payload_index()
             return
 
         await self._client.create_collection(
@@ -68,11 +69,11 @@ class BaseQdrantRepository(ABC):
             vectors_config=VectorParams(size=self._vector_size, distance=Distance.COSINE),
             hnsw_config=HnswConfigDiff(m=self._hnsw_edge_size, ef_construct=self._hnsw_neighbour_size),
         )
-        await self._client.create_payload_index(
-            collection_name=self._collection_name,
-            field_name=_USER_ID_PAYLOAD_KEY,
-            field_schema=PayloadSchemaType.KEYWORD,
-        )
+        await self._create_user_id_payload_index()
+
+    async def is_collection_ready(self) -> bool:
+        """Return whether the configured Qdrant collection is available."""
+        return await self._client.collection_exists(self._collection_name)
 
     async def upsert(self, user_id: uuid.UUID, points: list[PointStruct]) -> None:
         """Insert or update points, stamping each with the owner's user_id.
@@ -171,3 +172,20 @@ class BaseQdrantRepository(ABC):
             with_payload=True,
         )
         return points_result.points
+
+    async def _ensure_user_id_payload_index(self) -> None:
+        """Create the user_id payload index when an existing collection lacks it."""
+        collection_info = await self._client.get_collection(self._collection_name)
+        payload_schema = collection_info.payload_schema or {}
+        if _USER_ID_PAYLOAD_KEY in payload_schema:
+            return
+
+        await self._create_user_id_payload_index()
+
+    async def _create_user_id_payload_index(self) -> None:
+        """Create the KEYWORD payload index used for tenant filtering."""
+        await self._client.create_payload_index(
+            collection_name=self._collection_name,
+            field_name=_USER_ID_PAYLOAD_KEY,
+            field_schema=PayloadSchemaType.KEYWORD,
+        )

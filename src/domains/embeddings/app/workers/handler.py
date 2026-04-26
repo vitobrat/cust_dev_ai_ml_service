@@ -11,6 +11,7 @@ from src.domains.embeddings.exceptions import (
     EmbeddingDeleteError,
     EmbeddingUpsertError,
 )
+from src.infrastructure.exceptions import EmbeddingError
 from src.infrastructure.rabbitmq.client import RabbitMQClient
 from src.schemas.api_base import ResponseBase, StatusType
 from src.schemas.embeddings import (
@@ -80,7 +81,10 @@ class EmbeddingsWorkerHandler:
             await self._rabbitmq.publish_reply(
                 reply_to,
                 correlation_id,
-                payload=ResponseBase(details=f"Unknown action: {action}", status=StatusType.ERROR).model_dump(),
+                payload=ResponseBase(
+                    details=f"Unknown action: {action}",
+                    status=StatusType.ERROR,
+                ).model_dump(mode="json"),
             )
 
     async def _handle_upsert(self, reply_to: str, correlation_id: str, payload: dict[str, Any]) -> None:
@@ -98,7 +102,7 @@ class EmbeddingsWorkerHandler:
             await self._rabbitmq.publish_reply(
                 reply_to,
                 correlation_id,
-                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(),
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
             )
             return
 
@@ -109,14 +113,22 @@ class EmbeddingsWorkerHandler:
             await self._rabbitmq.publish_reply(
                 reply_to,
                 correlation_id,
-                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(),
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
+            )
+            return
+        except EmbeddingError as exc:
+            self._logger.error("Embedding failed for user %s: %s", request.user_id, exc)
+            await self._rabbitmq.publish_reply(
+                reply_to,
+                correlation_id,
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
             )
             return
 
         await self._rabbitmq.publish_reply(
             reply_to,
             correlation_id,
-            payload=UpsertResponse(msg=count, status=StatusType.SUCCESS).model_dump(),
+            payload=UpsertResponse(msg=count, status=StatusType.SUCCESS).model_dump(mode="json"),
         )
 
     async def _handle_delete_by_id(self, reply_to: str, correlation_id: str, payload: dict[str, Any]) -> None:
@@ -134,7 +146,7 @@ class EmbeddingsWorkerHandler:
             await self._rabbitmq.publish_reply(
                 reply_to,
                 correlation_id,
-                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(),
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
             )
             return
 
@@ -145,14 +157,14 @@ class EmbeddingsWorkerHandler:
             await self._rabbitmq.publish_reply(
                 reply_to,
                 correlation_id,
-                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(),
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
             )
             return
 
         await self._rabbitmq.publish_reply(
             reply_to,
             correlation_id,
-            payload=DeleteResponse(msg=True, status=StatusType.SUCCESS).model_dump(),
+            payload=DeleteResponse(msg=True, status=StatusType.SUCCESS).model_dump(mode="json"),
         )
 
     async def _handle_delete_all(self, reply_to: str, correlation_id: str, payload: dict[str, Any]) -> None:
@@ -170,7 +182,7 @@ class EmbeddingsWorkerHandler:
             await self._rabbitmq.publish_reply(
                 reply_to,
                 correlation_id,
-                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(),
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
             )
             return
 
@@ -181,12 +193,12 @@ class EmbeddingsWorkerHandler:
             await self._rabbitmq.publish_reply(
                 reply_to,
                 correlation_id,
-                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(),
+                payload=ResponseBase(details=str(exc), status=StatusType.ERROR).model_dump(mode="json"),
             )
             return
 
         await self._rabbitmq.publish_reply(
             reply_to,
             correlation_id,
-            payload=DeleteResponse(msg=True, status=StatusType.SUCCESS).model_dump(),
+            payload=DeleteResponse(msg=True, status=StatusType.SUCCESS).model_dump(mode="json"),
         )

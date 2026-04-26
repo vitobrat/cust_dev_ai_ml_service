@@ -58,6 +58,10 @@ class TritonClient:
         """Close the underlying gRPC channel and release all resources."""
         await self._client.close()
 
+    async def is_ready(self) -> bool:
+        """Return whether the configured Triton model is ready for inference."""
+        return await self._client.is_model_ready(self._model_name)
+
     async def embed(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for a batch of texts via Triton inference.
 
